@@ -1,9 +1,9 @@
 use std::{io, sync::Arc, sync::Mutex, thread};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{command, Parser};
 use console::{self, Term};
-use gphoto2::{widget::RadioWidget, Context};
+use gphoto2::{widget::RadioWidget, Context as CameraContext};
 use std::io::Write;
 
 #[derive(Parser, Debug)]
@@ -17,8 +17,11 @@ fn main() -> Result<()> {
     let _ = Args::parse();
     let mut out = io::stdout();
 
-    let ctx = Context::new()?;
-    let camera = ctx.autodetect_camera().wait()?;
+    let ctx = CameraContext::new()?;
+    let camera = ctx
+        .autodetect_camera()
+        .wait()
+        .with_context(|| "Failed to discover a camera")?;
 
     let focus = camera
         .config_key::<RadioWidget>("manualfocusdrive")
